@@ -54,7 +54,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:contentDescription="Copier identifiant"
-                android:src="@drawable/ic_copy"
+                android:src="@drawable/ic_person"
                 app:tint="#9AA4B2" />
 
             <ImageButton
@@ -79,6 +79,15 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnEdit"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="@string/action_edit"
+                android:src="@drawable/ic_gear"
+                app:tint="#4F8CFF" />
 
             <ImageButton
                 android:id="@+id/btnDelete"

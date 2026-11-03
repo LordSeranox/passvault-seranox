@@ -66,6 +66,7 @@ class MainActivity : AppCompatActivity() {
             entries,
             onCopyUser = { copyToClipboard(getString(R.string.app_name), it.username) },
             onCopyPass = { copyToClipboard(getString(R.string.app_name), it.password) },
+            onEdit = { showEntryDialog(it) },
             onDelete = { confirmDelete(it) }
         )
         binding.recyclerEntries.layoutManager = LinearLayoutManager(this)

@@ -10,6 +10,7 @@ class EntryAdapter(
     private var entries: List<VaultEntry>,
     private val onCopyUser: (VaultEntry) -> Unit,
     private val onCopyPass: (VaultEntry) -> Unit,
+    private val onEdit: (VaultEntry) -> Unit,
     private val onDelete: (VaultEntry) -> Unit
 ) : RecyclerView.Adapter<EntryAdapter.VH>() {
 
@@ -35,6 +36,7 @@ class EntryAdapter(
             b.txtPassword.text = if (e.id in revealed) e.password else "•".repeat(e.password.length.coerceAtMost(16))
             b.btnCopyUser.setOnClickListener { onCopyUser(e) }
             b.btnCopyPass.setOnClickListener { onCopyPass(e) }
+            b.btnEdit.setOnClickListener { onEdit(e) }
             b.btnDelete.setOnClickListener { onDelete(e) }
             b.btnReveal.setOnClickListener {
                 if (!revealed.remove(e.id)) revealed.add(e.id)
