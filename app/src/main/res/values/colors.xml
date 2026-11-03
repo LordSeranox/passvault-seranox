@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="vault_accent">#4F8CFF</color>
+    <color name="vault_bg">#0E1116</color>
+    <color name="vault_card">#1A1F29</color>
+</resources>
