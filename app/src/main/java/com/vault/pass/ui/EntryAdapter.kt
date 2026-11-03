@@ -2,7 +2,9 @@ package com.vault.pass.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.vault.pass.R
 import com.vault.pass.VaultEntry
 import com.vault.pass.databinding.ItemEntryBinding
 
@@ -11,13 +13,20 @@ class EntryAdapter(
     private val onCopyUser: (VaultEntry) -> Unit,
     private val onCopyPass: (VaultEntry) -> Unit,
     private val onEdit: (VaultEntry) -> Unit,
-    private val onDelete: (VaultEntry) -> Unit
+    private val onDelete: (VaultEntry) -> Unit,
+    private val onTogglePin: (VaultEntry) -> Unit
 ) : RecyclerView.Adapter<EntryAdapter.VH>() {
 
     private val revealed = mutableSetOf<String>()
 
-    fun submit(list: List<VaultEntry>) {
+    fun submit(list: List<VaultEntry>, query: String = "") {
+        val q = query.trim().lowercase()
         entries = list
+            .filter {
+                q.isBlank() || it.site.lowercase().contains(q) ||
+                    it.username.lowercase().contains(q)
+            }
+            .sortedWith(compareByDescending<VaultEntry> { it.pinned }.thenBy { it.site.lowercase() })
         revealed.retainAll(list.map { it.id }.toSet())
         notifyDataSetChanged()
     }
@@ -33,7 +42,14 @@ class EntryAdapter(
         fun bind(e: VaultEntry) {
             b.txtSite.text = e.site.ifBlank { "(sans nom)" }
             b.txtUsername.text = e.username.ifBlank { "—" }
-            b.txtPassword.text = if (e.id in revealed) e.password else "•".repeat(e.password.length.coerceAtMost(16))
+            b.txtPassword.text =
+                if (e.id in revealed) e.password
+                else "•".repeat(e.password.length.coerceAtMost(16))
+            b.btnPin.setColorFilter(
+                if (e.pinned) ContextCompat.getColor(b.root.context, R.color.vault_accent)
+                else ContextCompat.getColor(b.root.context, R.color.vault_text_secondary)
+            )
+            b.btnPin.setOnClickListener { onTogglePin(e) }
             b.btnCopyUser.setOnClickListener { onCopyUser(e) }
             b.btnCopyPass.setOnClickListener { onCopyPass(e) }
             b.btnEdit.setOnClickListener { onEdit(e) }

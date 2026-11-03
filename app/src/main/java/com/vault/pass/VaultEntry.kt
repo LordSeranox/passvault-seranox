@@ -9,7 +9,8 @@ data class VaultEntry(
     var site: String,
     var username: String,
     var password: String,
-    var notes: String = ""
+    var notes: String = "",
+    var pinned: Boolean = false
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -17,6 +18,7 @@ data class VaultEntry(
         .put("username", username)
         .put("password", password)
         .put("notes", notes)
+        .put("pinned", pinned)
 
     companion object {
         fun fromJson(o: JSONObject) = VaultEntry(
@@ -24,7 +26,8 @@ data class VaultEntry(
             site = o.optString("site"),
             username = o.optString("username"),
             password = o.optString("password"),
-            notes = o.optString("notes")
+            notes = o.optString("notes"),
+            pinned = o.optBoolean("pinned", false)
         )
     }
 }

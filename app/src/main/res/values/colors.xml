@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="vault_accent">#4F8CFF</color>
-    <color name="vault_bg">#0E1116</color>
-    <color name="vault_card">#1A1F29</color>
+    <color name="vault_accent">#2F6BFF</color>
+    <color name="vault_bg">#F4F6FA</color>
+    <color name="vault_card">#FFFFFF</color>
+    <color name="vault_stroke">#E2E6EE</color>
+    <color name="vault_text_primary">#10141B</color>
+    <color name="vault_text_secondary">#5A6473</color>
+    <color name="vault_error">#D64545</color>
+    <color name="vault_success">#2E9E4F</color>
+    <color name="ic_launcher_background">#0E1116</color>
 </resources>

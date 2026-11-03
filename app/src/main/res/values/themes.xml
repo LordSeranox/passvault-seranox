@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Base.Theme.PassVault" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Base.Theme.PassVault" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/vault_accent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
     <style name="Theme.PassVault" parent="Base.Theme.PassVault" />
 
@@ -16,13 +16,13 @@
         <item name="android:textSize">22sp</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:backgroundTint">@color/vault_card</item>
-        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColor">@color/vault_text_primary</item>
         <item name="cornerRadius">16dp</item>
     </style>
 
     <style name="PadButton.Icon" parent="PadButton">
         <item name="android:layout_width">72dp</item>
         <item name="android:layout_height">60dp</item>
-        <item name="iconTint">#FFFFFF</item>
+        <item name="iconTint">@color/vault_text_primary</item>
     </style>
 </resources>

@@ -8,7 +8,7 @@
     app:cardCornerRadius="14dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
-    app:strokeColor="#232B3A"
+    app:strokeColor="@color/vault_stroke"
     app:rippleColor="#334F8CFF">
 
     <LinearLayout
@@ -21,7 +21,7 @@
             android:id="@+id/txtSite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/vault_text_primary"
             android:textSize="17sp"
             android:textStyle="bold" />
 
@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#9AA4B2"
+            android:textColor="@color/vault_text_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:fontFamily="monospace"
-            android:textColor="#9AA4B2"
+            android:textColor="@color/vault_text_secondary"
             android:textSize="14sp" />
 
         <LinearLayout
@@ -49,13 +49,22 @@
             android:orientation="horizontal">
 
             <ImageButton
+                android:id="@+id/btnPin"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="@string/action_pin"
+                android:src="@drawable/ic_pin"
+                app:tint="@color/vault_text_secondary" />
+
+            <ImageButton
                 android:id="@+id/btnCopyUser"
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:contentDescription="Copier identifiant"
                 android:src="@drawable/ic_person"
-                app:tint="#9AA4B2" />
+                app:tint="@color/vault_text_secondary" />
 
             <ImageButton
                 android:id="@+id/btnReveal"
@@ -64,7 +73,7 @@
                 android:layout_height="48dp"
                 android:contentDescription="Afficher mot de passe"
                 android:src="@drawable/ic_eye"
-                app:tint="#9AA4B2" />
+                app:tint="@color/vault_text_secondary" />
 
             <ImageButton
                 android:id="@+id/btnCopyPass"
@@ -73,7 +82,7 @@
                 android:layout_height="48dp"
                 android:contentDescription="Copier mot de passe"
                 android:src="@drawable/ic_copy"
-                app:tint="#9AA4B2" />
+                app:tint="@color/vault_text_secondary" />
 
             <View
                 android:layout_width="0dp"
@@ -87,7 +96,7 @@
                 android:layout_height="48dp"
                 android:contentDescription="@string/action_edit"
                 android:src="@drawable/ic_gear"
-                app:tint="#4F8CFF" />
+                app:tint="@color/vault_accent" />
 
             <ImageButton
                 android:id="@+id/btnDelete"
@@ -96,7 +105,7 @@
                 android:layout_height="48dp"
                 android:contentDescription="@string/action_delete"
                 android:src="@drawable/ic_delete"
-                app:tint="#FF6B6B" />
+                app:tint="@color/vault_error" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

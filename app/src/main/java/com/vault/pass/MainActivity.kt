@@ -3,20 +3,27 @@ package com.vault.pass
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.TextView
+import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.vault.pass.databinding.ActivityMainBinding
 import com.vault.pass.databinding.DialogEntryBinding
 import com.vault.pass.storage.PinManager
+import com.vault.pass.storage.SettingsPrefs
 import com.vault.pass.storage.VaultRepository
 import com.vault.pass.ui.EntryAdapter
 import kotlin.random.Random
@@ -26,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: VaultRepository
     private lateinit var pinManager: PinManager
+    private lateinit var prefs: SettingsPrefs
     private lateinit var adapter: EntryAdapter
     private var entries = mutableListOf<VaultEntry>()
     private var unlocked = false
@@ -34,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private val pinBuffer = StringBuilder()
     private var failedAttempts = 0
     private var cooldownUntil = 0L
+    private var verifying = false
     private val handler = Handler(Looper.getMainLooper())
 
     private val cooldownTicker = object : Runnable {
@@ -57,6 +66,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        prefs = SettingsPrefs(this)
+        applyLocale(prefs.language)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -64,10 +75,11 @@ class MainActivity : AppCompatActivity() {
         pinManager = PinManager(this)
         adapter = EntryAdapter(
             entries,
-            onCopyUser = { copyToClipboard(getString(R.string.app_name), it.username) },
-            onCopyPass = { copyToClipboard(getString(R.string.app_name), it.password) },
+            onCopyUser = { copyToClipboard(it.username) },
+            onCopyPass = { copyToClipboard(it.password) },
             onEdit = { showEntryDialog(it) },
-            onDelete = { confirmDelete(it) }
+            onDelete = { confirmDelete(it) },
+            onTogglePin = { togglePin(it) }
         )
         binding.recyclerEntries.layoutManager = LinearLayoutManager(this)
         binding.recyclerEntries.adapter = adapter
@@ -76,16 +88,40 @@ class MainActivity : AppCompatActivity() {
             binding.pad0, binding.pad1, binding.pad2, binding.pad3, binding.pad4,
             binding.pad5, binding.pad6, binding.pad7, binding.pad8, binding.pad9
         )
-        digitIds.forEachIndexed { d, btn -> btn.setOnClickListener { onDigit(d.toString()) } }
-        binding.padDel.setOnClickListener { onDeleteDigit() }
+        digitIds.forEachIndexed { d, btn ->
+            btn.setOnClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                onDigit(d.toString())
+            }
+        }
+        binding.padDel.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            onDeleteDigit()
+        }
 
         binding.fabAdd.setOnClickListener { showEntryDialog(null) }
+        binding.btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        binding.searchInput.doAfterTextChanged { refreshList() }
         updateLockUi()
     }
 
     override fun onStop() {
         super.onStop()
         lock()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (unlocked) refreshList()
+    }
+
+    private fun applyLocale(lang: String) {
+        AppCompatDelegate.setApplicationLocales(
+            if (lang == "en") LocaleListCompat.forLanguageTags("en")
+            else LocaleListCompat.forLanguageTags("fr")
+        )
     }
 
     private fun updateLockUi() {
@@ -115,6 +151,7 @@ class MainActivity : AppCompatActivity() {
             showCooldown()
             return
         }
+        if (verifying) return
         if (pinBuffer.length >= PIN_LENGTH) return
         pinBuffer.append(digit)
         binding.txtPinError.text = ""
@@ -133,22 +170,20 @@ class MainActivity : AppCompatActivity() {
         val pin = pinBuffer.toString()
 
         if (pinManager.hasPin()) {
-            if (pinManager.verify(pin)) {
-                failedAttempts = 0
-                unlock()
-            } else {
-                failedAttempts++
-                pinBuffer.clear()
-                updateDots()
-                if (failedAttempts >= MAX_ATTEMPTS) {
-                    cooldownUntil = System.currentTimeMillis() + COOLDOWN_MS
-                    failedAttempts = 0
-                    binding.txtPinError.setText(R.string.pin_cooldown_start)
-                    handler.postDelayed(cooldownTicker, 500)
-                } else {
-                    binding.txtPinError.setText(pinErrors[Random.nextInt(pinErrors.size)])
+            verifying = true
+            Thread {
+                val ok = pinManager.verify(pin)
+                runOnUiThread {
+                    verifying = false
+                    if (ok) {
+                        prefs.wrongAttempts = 0
+                        failedAttempts = 0
+                        unlock()
+                    } else {
+                        handleWrongPin()
+                    }
                 }
-            }
+            }.start()
             return
         }
 
@@ -173,6 +208,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleWrongPin() {
+        failedAttempts++
+        prefs.wrongAttempts = prefs.wrongAttempts + 1
+
+        if (prefs.selfDestructThreshold > 0 &&
+            prefs.wrongAttempts >= prefs.selfDestructThreshold
+        ) {
+            selfDestruct()
+            return
+        }
+
+        pinBuffer.clear()
+        updateDots()
+        if (failedAttempts >= MAX_ATTEMPTS) {
+            cooldownUntil = System.currentTimeMillis() + COOLDOWN_MS
+            failedAttempts = 0
+            binding.txtPinError.setText(R.string.pin_cooldown_start)
+            handler.postDelayed(cooldownTicker, 500)
+        } else {
+            binding.txtPinError.setText(pinErrors[Random.nextInt(pinErrors.size)])
+        }
+    }
+
+    private fun selfDestruct() {
+        entries.clear()
+        repo.save(entries)
+        prefs.wrongAttempts = 0
+        failedAttempts = 0
+        cooldownUntil = 0L
+        handler.removeCallbacks(cooldownTicker)
+        pinBuffer.clear()
+        updateDots()
+        binding.txtPinError.setText(R.string.self_destruct_done)
+    }
+
     private fun showCooldown() {
         handler.removeCallbacks(cooldownTicker)
         handler.post(cooldownTicker)
@@ -181,27 +251,51 @@ class MainActivity : AppCompatActivity() {
     private fun unlock() {
         unlocked = true
         entries = repo.load()
-        adapter.submit(entries)
         binding.lockView.visibility = View.GONE
         binding.mainView.visibility = View.VISIBLE
-        binding.emptyView.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+        refreshList()
     }
 
     private fun lock() {
         if (!unlocked) return
-        handler.removeCallbacks(cooldownTicker)
         unlocked = false
         entries.clear()
         adapter.submit(entries)
+        binding.searchInput.setText("")
         binding.mainView.visibility = View.GONE
         binding.lockView.visibility = View.VISIBLE
         updateLockUi()
     }
 
-    private fun copyToClipboard(label: String, value: String) {
+    private fun refreshList() {
+        adapter.submit(entries, binding.searchInput.text?.toString().orEmpty())
+        binding.emptyView.visibility =
+            if (entries.isEmpty()) View.VISIBLE else View.GONE
+        updateAuditCard()
+    }
+
+    private fun updateAuditCard() {
+        if (!prefs.auditEnabled) {
+            binding.auditCard.visibility = View.GONE
+            return
+        }
+        val weak = entries.count { PasswordStrength.isWeak(it.password) }
+        val reused = entries.groupBy { it.password.lowercase() }
+            .count { (_, v) -> v.size > 1 }
+        binding.auditCard.visibility = View.VISIBLE
+        binding.auditText.text = getString(R.string.audit_summary, weak, reused)
+    }
+
+    private fun togglePin(e: VaultEntry) {
+        e.pinned = !e.pinned
+        repo.save(entries)
+        refreshList()
+    }
+
+    private fun copyToClipboard(value: String) {
         if (value.isBlank()) return
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText(label, value))
+        cm.setPrimaryClip(ClipData.newPlainText("PassVault", value))
         Snackbar.make(binding.mainView, R.string.copied, Snackbar.LENGTH_SHORT).show()
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({ cm.clearPrimaryClip() }, 30_000)
@@ -213,6 +307,17 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.inputUsername.setText(existing?.username)
         dialogBinding.inputPassword.setText(existing?.password)
         dialogBinding.inputNotes.setText(existing?.notes)
+
+        val updateStrength = { p: String ->
+            val s = PasswordStrength.score(p)
+            val bar = dialogBinding.strengthBar as ProgressBar
+            bar.progress = PasswordStrength.progress(s)
+            bar.progressTintList =
+                android.content.res.ColorStateList.valueOf(Color.parseColor(PasswordStrength.colorHex(s)))
+            dialogBinding.strengthLabel.setText(PasswordStrength.labelRes(s))
+        }
+        dialogBinding.inputPassword.doAfterTextChanged { updateStrength(it?.toString().orEmpty()) }
+        updateStrength(existing?.password.orEmpty())
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(if (existing == null) getString(R.string.btn_add) else existing.site.ifBlank { getString(R.string.btn_add) })
@@ -249,8 +354,7 @@ class MainActivity : AppCompatActivity() {
                 existing.notes = dialogBinding.inputNotes.text?.toString()?.trim().orEmpty()
             }
             repo.save(entries)
-            adapter.submit(entries)
-            binding.emptyView.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+            refreshList()
             dialog.dismiss()
         }
     }
@@ -262,8 +366,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 entries.removeAll { it.id == entry.id }
                 repo.save(entries)
-                adapter.submit(entries)
-                binding.emptyView.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+                refreshList()
             }
             .setNegativeButton(R.string.action_cancel, null)
             .show()
