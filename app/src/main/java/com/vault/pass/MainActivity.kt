@@ -36,6 +36,18 @@ class MainActivity : AppCompatActivity() {
     private var cooldownUntil = 0L
     private val handler = Handler(Looper.getMainLooper())
 
+    private val cooldownTicker = object : Runnable {
+        override fun run() {
+            val remaining = cooldownUntil - System.currentTimeMillis()
+            if (remaining <= 0) {
+                binding.txtPinError.text = ""
+            } else {
+                binding.txtPinError.text = getString(R.string.pin_cooldown, (remaining / 1000).toInt() + 1)
+                handler.postDelayed(this, 500)
+            }
+        }
+    }
+
     private val pinErrors = intArrayOf(
         R.string.pin_error_1, R.string.pin_error_2, R.string.pin_error_3,
         R.string.pin_error_4, R.string.pin_error_5, R.string.pin_error_6,
@@ -131,6 +143,7 @@ class MainActivity : AppCompatActivity() {
                     cooldownUntil = System.currentTimeMillis() + COOLDOWN_MS
                     failedAttempts = 0
                     binding.txtPinError.setText(R.string.pin_cooldown_start)
+                    handler.postDelayed(cooldownTicker, 500)
                 } else {
                     binding.txtPinError.setText(pinErrors[Random.nextInt(pinErrors.size)])
                 }
@@ -160,8 +173,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCooldown() {
-        val sec = ((cooldownUntil - System.currentTimeMillis()) / 1000).toInt() + 1
-        binding.txtPinError.text = getString(R.string.pin_cooldown, sec)
+        handler.removeCallbacks(cooldownTicker)
+        handler.post(cooldownTicker)
     }
 
     private fun unlock() {
@@ -175,6 +188,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun lock() {
         if (!unlocked) return
+        handler.removeCallbacks(cooldownTicker)
         unlocked = false
         entries.clear()
         adapter.submit(entries)

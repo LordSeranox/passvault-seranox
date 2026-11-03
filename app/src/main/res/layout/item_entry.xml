@@ -7,6 +7,8 @@
     app:cardBackgroundColor="@color/vault_card"
     app:cardCornerRadius="14dp"
     app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#232B3A"
     app:rippleColor="#334F8CFF">
 
     <LinearLayout
