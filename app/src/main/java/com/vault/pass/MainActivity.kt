@@ -99,10 +99,6 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             val confirm = binding.pinConfirmInput.text?.toString().orEmpty()
-            if (pin.any { it == pin[0] }) {
-                binding.txtPinError.setText(R.string.pin_too_simple)
-                return
-            }
             if (confirm != pin) {
                 binding.txtPinError.setText(R.string.pin_mismatch)
                 return

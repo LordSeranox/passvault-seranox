@@ -10,7 +10,6 @@
     <string name="btn_create">Créer le coffre</string>
     <string name="pin_invalid_format">Le code doit contenir exactement 6 chiffres</string>
     <string name="pin_mismatch">Les deux codes ne correspondent pas</string>
-    <string name="pin_too_simple">Choisissez un code moins évident</string>
     <string name="pin_wrong">Code incorrect</string>
     <string name="pin_cooldown_start">Trop d\u2019essais. Réessayez dans 30 secondes.</string>
     <string name="pin_cooldown">Réessayez dans %d secondes</string>
