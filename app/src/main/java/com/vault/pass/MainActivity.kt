@@ -11,27 +11,27 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.vault.pass.databinding.ActivityMainBinding
 import com.vault.pass.databinding.DialogEntryBinding
+import com.vault.pass.storage.PinManager
 import com.vault.pass.storage.VaultRepository
 import com.vault.pass.ui.EntryAdapter
-import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: VaultRepository
+    private lateinit var pinManager: PinManager
     private lateinit var adapter: EntryAdapter
     private var entries = mutableListOf<VaultEntry>()
     private var unlocked = false
+    private var failedAttempts = 0
+    private var cooldownUntil = 0L
     private val handler = Handler(Looper.getMainLooper())
-    private var lockAt = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         repo = VaultRepository(this)
+        pinManager = PinManager(this)
         adapter = EntryAdapter(
             entries,
             onCopyUser = { copyToClipboard(getString(R.string.app_name), it.username) },
@@ -48,18 +49,19 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerEntries.layoutManager = LinearLayoutManager(this)
         binding.recyclerEntries.adapter = adapter
 
-        binding.btnUnlock.setOnClickListener { showBiometricPrompt() }
+        binding.btnUnlock.setOnClickListener { onSubmitPin() }
         binding.fabAdd.setOnClickListener { showEntryDialog(null) }
+        binding.pinInput.doAfterTextChanged { binding.txtPinError.text = "" }
+        binding.pinConfirmInput.doAfterTextChanged { binding.txtPinError.text = "" }
 
-        if (!canBiometric()) {
-            binding.lockView.visibility = View.VISIBLE
-            Toast.makeText(this, R.string.biometric_error, Toast.LENGTH_LONG).show()
+        if (pinManager.hasPin()) {
+            binding.pinConfirmLayout.visibility = View.GONE
+            binding.unlockSubtitle.setText(R.string.pin_enter_subtitle)
+            binding.btnUnlock.setText(R.string.btn_unlock)
+        } else {
+            binding.unlockSubtitle.setText(R.string.pin_create_subtitle)
+            binding.btnUnlock.setText(R.string.btn_create)
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!unlocked && canBiometric()) showBiometricPrompt()
     }
 
     override fun onStop() {
@@ -67,44 +69,47 @@ class MainActivity : AppCompatActivity() {
         lock()
     }
 
-    override fun onUserLeaveHint() {
-        lockAt = System.currentTimeMillis()
-    }
+    private fun onSubmitPin() {
+        if (System.currentTimeMillis() < cooldownUntil) {
+            val sec = ((cooldownUntil - System.currentTimeMillis()) / 1000).toInt() + 1
+            binding.txtPinError.text = getString(R.string.pin_cooldown, sec)
+            return
+        }
+        val pin = binding.pinInput.text?.toString().orEmpty()
 
-    private fun canBiometric(): Boolean =
-        BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-            BiometricManager.BIOMETRIC_SUCCESS ||
-            BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) ==
-            BiometricManager.BIOMETRIC_SUCCESS
+        if (pin.length != PIN_LENGTH || !pin.all { it.isDigit() }) {
+            binding.txtPinError.setText(R.string.pin_invalid_format)
+            return
+        }
 
-    private fun bestAuthenticators(): Int {
-        val strong = BiometricManager.from(this)
-            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-            BiometricManager.BIOMETRIC_SUCCESS
-        return if (strong) BiometricManager.Authenticators.BIOMETRIC_STRONG
-        else BiometricManager.Authenticators.BIOMETRIC_WEAK
-    }
-
-    private fun showBiometricPrompt() {
-        val executor: Executor = ContextCompat.getMainExecutor(this)
-        val prompt = BiometricPrompt(this, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    unlock()
+        if (pinManager.hasPin()) {
+            if (pinManager.verify(pin)) {
+                failedAttempts = 0
+                unlock()
+            } else {
+                failedAttempts++
+                binding.pinInput.setText("")
+                if (failedAttempts >= MAX_ATTEMPTS) {
+                    cooldownUntil = System.currentTimeMillis() + COOLDOWN_MS
+                    failedAttempts = 0
+                    binding.txtPinError.setText(R.string.pin_cooldown_start)
+                } else {
+                    binding.txtPinError.setText(R.string.pin_wrong)
                 }
-
-                override fun onAuthenticationError(code: Int, message: CharSequence) {
-                    binding.lockView.visibility = View.VISIBLE
-                }
-            })
-
-        val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(getString(R.string.unlock_title))
-            .setSubtitle(getString(R.string.unlock_subtitle))
-            .setAllowedAuthenticators(bestAuthenticators())
-            .build()
-
-        prompt.authenticate(info)
+            }
+        } else {
+            val confirm = binding.pinConfirmInput.text?.toString().orEmpty()
+            if (pin.any { it == pin[0] }) {
+                binding.txtPinError.setText(R.string.pin_too_simple)
+                return
+            }
+            if (confirm != pin) {
+                binding.txtPinError.setText(R.string.pin_mismatch)
+                return
+            }
+            pinManager.setPin(pin)
+            unlock()
+        }
     }
 
     private fun unlock() {
@@ -121,6 +126,8 @@ class MainActivity : AppCompatActivity() {
         unlocked = false
         entries.clear()
         adapter.submit(entries)
+        binding.pinInput.setText("")
+        binding.pinConfirmInput.setText("")
         binding.mainView.visibility = View.GONE
         binding.lockView.visibility = View.VISIBLE
     }
@@ -157,7 +164,7 @@ class MainActivity : AppCompatActivity() {
             val site = dialogBinding.inputSite.text?.toString()?.trim().orEmpty()
             val pass = dialogBinding.inputPassword.text?.toString().orEmpty()
             if (site.isBlank() || pass.isBlank()) {
-                Snackbar.make(dialogBinding.root, "Site et mot de passe requis", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(dialogBinding.root, R.string.error_required_fields, Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (existing == null) {
@@ -185,7 +192,7 @@ class MainActivity : AppCompatActivity() {
     private fun confirmDelete(entry: VaultEntry) {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.action_delete)
-            .setMessage("Supprimer « ${entry.site} » ?")
+            .setMessage(getString(R.string.delete_confirm, entry.site))
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 entries.removeAll { it.id == entry.id }
                 repo.save(entries)
@@ -199,5 +206,11 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+    }
+
+    companion object {
+        private const val PIN_LENGTH = 6
+        private const val MAX_ATTEMPTS = 5
+        private const val COOLDOWN_MS = 30_000L
     }
 }

@@ -2,8 +2,18 @@
 <resources>
     <string name="app_name">PassVault</string>
     <string name="unlock_title">Coffre verrouillé</string>
-    <string name="unlock_subtitle">Authentifiez-vous pour ouvrir votre coffre</string>
+    <string name="pin_enter_subtitle">Entrez votre code PIN à 6 chiffres</string>
+    <string name="pin_create_subtitle">Créez votre code PIN à 6 chiffres</string>
+    <string name="hint_pin">Code PIN</string>
+    <string name="hint_pin_confirm">Confirmez le code</string>
     <string name="btn_unlock">Déverrouiller</string>
+    <string name="btn_create">Créer le coffre</string>
+    <string name="pin_invalid_format">Le code doit contenir exactement 6 chiffres</string>
+    <string name="pin_mismatch">Les deux codes ne correspondent pas</string>
+    <string name="pin_too_simple">Choisissez un code moins évident</string>
+    <string name="pin_wrong">Code incorrect</string>
+    <string name="pin_cooldown_start">Trop d\u2019essais. Réessayez dans 30 secondes.</string>
+    <string name="pin_cooldown">Réessayez dans %d secondes</string>
     <string name="btn_add">Ajouter une entrée</string>
     <string name="hint_site">Site / Service</string>
     <string name="hint_username">Identifiant</string>
@@ -13,7 +23,8 @@
     <string name="action_cancel">Annuler</string>
     <string name="action_delete">Supprimer</string>
     <string name="action_generate">Générer</string>
+    <string name="error_required_fields">Site et mot de passe requis</string>
+    <string name="delete_confirm">Supprimer « %s » ?</string>
     <string name="empty_vault">Aucune entrée. Ajoutez votre premier mot de passe.</string>
     <string name="copied">Copié dans le presse-papiers (effacement dans 30 s)</string>
-    <string name="biometric_error">Authentification biométrique requise</string>
 </resources>
