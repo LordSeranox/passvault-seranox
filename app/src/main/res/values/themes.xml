@@ -6,4 +6,23 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
     <style name="Theme.PassVault" parent="Base.Theme.PassVault" />
+
+    <style name="PadButton" parent="Widget.Material3.Button.TonalButton">
+        <item name="android:layout_width">72dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:layout_margin">6dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:backgroundTint">@color/vault_card</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="cornerRadius">16dp</item>
+    </style>
+
+    <style name="PadButton.Icon" parent="PadButton">
+        <item name="android:layout_width">72dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="iconTint">#FFFFFF</item>
+    </style>
 </resources>

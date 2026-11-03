@@ -4,89 +4,137 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/vault_bg"
+    android:fitsSystemWindows="true"
     android:padding="16dp">
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/lockView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:fillViewport="false">
 
-        <ImageView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_lock"
-            app:tint="@color/vault_accent" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/unlock_title"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/unlockSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/pin_enter_subtitle"
-            android:textColor="#9AA4B2" />
-
-        <com.google.android.material.textfield.TextInputLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:hint="@string/hint_pin">
+            android:gravity="center"
+            android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pinInput"
-                android:layout_width="match_parent"
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lock"
+                app:tint="@color/vault_accent" />
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:inputType="numberPassword"
-                android:maxLength="6"
-                android:textSize="22sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="12dp"
+                android:text="@string/unlock_title"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pinConfirmLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/hint_pin_confirm">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pinConfirmInput"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/unlockSubtitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/pin_enter_subtitle"
+                android:textColor="#9AA4B2" />
+
+            <TextView
+                android:id="@+id/pinDots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
                 android:fontFamily="monospace"
-                android:inputType="numberPassword"
-                android:maxLength="6"
-                android:textSize="22sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:letterSpacing="0.3"
+                android:text="@string/pin_dots_empty"
+                android:textColor="#FFFFFF"
+                android:textSize="30sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/txtPinError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="#FF6B6B"
-            android:textSize="14sp" />
+            <TextView
+                android:id="@+id/txtPinError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:textColor="#FF6B6B"
+                android:textSize="14sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnUnlock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:padding="14dp"
-            android:text="@string/btn_unlock" />
-    </LinearLayout>
+            <GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:columnCount="3"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad1"
+                    style="@style/PadButton"
+                    android:text="1" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad2"
+                    style="@style/PadButton"
+                    android:text="2" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad3"
+                    style="@style/PadButton"
+                    android:text="3" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad4"
+                    style="@style/PadButton"
+                    android:text="4" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad5"
+                    style="@style/PadButton"
+                    android:text="5" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad6"
+                    style="@style/PadButton"
+                    android:text="6" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad7"
+                    style="@style/PadButton"
+                    android:text="7" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad8"
+                    style="@style/PadButton"
+                    android:text="8" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad9"
+                    style="@style/PadButton"
+                    android:text="9" />
+
+                <Space
+                    android:layout_width="72dp"
+                    android:layout_height="60dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pad0"
+                    style="@style/PadButton"
+                    android:text="0" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/padDel"
+                    style="@style/PadButton.Icon"
+                    android:contentDescription="@string/pad_delete"
+                    app:icon="@drawable/ic_delete"
+                    app:iconGravity="textStart" />
+            </GridLayout>
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:id="@+id/mainView"
@@ -98,6 +146,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:text="@string/app_name"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
@@ -110,7 +159,7 @@
             android:layout_weight="1"
             android:layout_marginTop="8dp"
             android:clipToPadding="false"
-            android:paddingBottom="80dp" />
+            android:paddingBottom="100dp" />
 
         <TextView
             android:id="@+id/emptyView"
@@ -127,6 +176,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
+            android:layout_marginBottom="32dp"
             android:contentDescription="@string/btn_add"
             android:src="@drawable/ic_add"
             app:backgroundTint="@color/vault_accent"

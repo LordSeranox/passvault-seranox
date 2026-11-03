@@ -8,10 +8,9 @@ import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -20,6 +19,7 @@ import com.vault.pass.databinding.DialogEntryBinding
 import com.vault.pass.storage.PinManager
 import com.vault.pass.storage.VaultRepository
 import com.vault.pass.ui.EntryAdapter
+import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,9 +29,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: EntryAdapter
     private var entries = mutableListOf<VaultEntry>()
     private var unlocked = false
+    private var setupStage = 0
+    private var firstPin = ""
+    private val pinBuffer = StringBuilder()
     private var failedAttempts = 0
     private var cooldownUntil = 0L
     private val handler = Handler(Looper.getMainLooper())
+
+    private val pinErrors = intArrayOf(
+        R.string.pin_error_1, R.string.pin_error_2, R.string.pin_error_3,
+        R.string.pin_error_4, R.string.pin_error_5, R.string.pin_error_6,
+        R.string.pin_error_7, R.string.pin_error_8, R.string.pin_error_9,
+        R.string.pin_error_10
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,19 +59,15 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerEntries.layoutManager = LinearLayoutManager(this)
         binding.recyclerEntries.adapter = adapter
 
-        binding.btnUnlock.setOnClickListener { onSubmitPin() }
-        binding.fabAdd.setOnClickListener { showEntryDialog(null) }
-        binding.pinInput.doAfterTextChanged { binding.txtPinError.text = "" }
-        binding.pinConfirmInput.doAfterTextChanged { binding.txtPinError.text = "" }
+        val digitIds = listOf(
+            binding.pad0, binding.pad1, binding.pad2, binding.pad3, binding.pad4,
+            binding.pad5, binding.pad6, binding.pad7, binding.pad8, binding.pad9
+        )
+        digitIds.forEachIndexed { d, btn -> btn.setOnClickListener { onDigit(d.toString()) } }
+        binding.padDel.setOnClickListener { onDeleteDigit() }
 
-        if (pinManager.hasPin()) {
-            binding.pinConfirmLayout.visibility = View.GONE
-            binding.unlockSubtitle.setText(R.string.pin_enter_subtitle)
-            binding.btnUnlock.setText(R.string.btn_unlock)
-        } else {
-            binding.unlockSubtitle.setText(R.string.pin_create_subtitle)
-            binding.btnUnlock.setText(R.string.btn_create)
-        }
+        binding.fabAdd.setOnClickListener { showEntryDialog(null) }
+        updateLockUi()
     }
 
     override fun onStop() {
@@ -69,18 +75,49 @@ class MainActivity : AppCompatActivity() {
         lock()
     }
 
-    private fun onSubmitPin() {
-        if (System.currentTimeMillis() < cooldownUntil) {
-            val sec = ((cooldownUntil - System.currentTimeMillis()) / 1000).toInt() + 1
-            binding.txtPinError.text = getString(R.string.pin_cooldown, sec)
-            return
+    private fun updateLockUi() {
+        pinBuffer.clear()
+        binding.txtPinError.text = ""
+        updateDots()
+        if (pinManager.hasPin()) {
+            setupStage = 0
+            binding.unlockSubtitle.setText(R.string.pin_enter_subtitle)
+        } else {
+            setupStage = 1
+            binding.unlockSubtitle.setText(R.string.pin_create_subtitle)
         }
-        val pin = binding.pinInput.text?.toString().orEmpty()
+    }
 
-        if (pin.length != PIN_LENGTH || !pin.all { it.isDigit() }) {
-            binding.txtPinError.setText(R.string.pin_invalid_format)
+    private fun updateDots() {
+        val sb = StringBuilder()
+        repeat(PIN_LENGTH) { i ->
+            sb.append(if (i < pinBuffer.length) "●" else "○")
+            if (i < PIN_LENGTH - 1) sb.append(" ")
+        }
+        binding.pinDots.text = sb.toString()
+    }
+
+    private fun onDigit(digit: String) {
+        if (System.currentTimeMillis() < cooldownUntil) {
+            showCooldown()
             return
         }
+        if (pinBuffer.length >= PIN_LENGTH) return
+        pinBuffer.append(digit)
+        binding.txtPinError.text = ""
+        updateDots()
+        if (pinBuffer.length == PIN_LENGTH) submitPin()
+    }
+
+    private fun onDeleteDigit() {
+        if (pinBuffer.isNotEmpty()) {
+            pinBuffer.deleteCharAt(pinBuffer.length - 1)
+            updateDots()
+        }
+    }
+
+    private fun submitPin() {
+        val pin = pinBuffer.toString()
 
         if (pinManager.hasPin()) {
             if (pinManager.verify(pin)) {
@@ -88,24 +125,43 @@ class MainActivity : AppCompatActivity() {
                 unlock()
             } else {
                 failedAttempts++
-                binding.pinInput.setText("")
+                pinBuffer.clear()
+                updateDots()
                 if (failedAttempts >= MAX_ATTEMPTS) {
                     cooldownUntil = System.currentTimeMillis() + COOLDOWN_MS
                     failedAttempts = 0
                     binding.txtPinError.setText(R.string.pin_cooldown_start)
                 } else {
-                    binding.txtPinError.setText(R.string.pin_wrong)
+                    binding.txtPinError.setText(pinErrors[Random.nextInt(pinErrors.size)])
                 }
             }
-        } else {
-            val confirm = binding.pinConfirmInput.text?.toString().orEmpty()
-            if (confirm != pin) {
-                binding.txtPinError.setText(R.string.pin_mismatch)
-                return
-            }
-            pinManager.setPin(pin)
-            unlock()
+            return
         }
+
+        if (setupStage == 1) {
+            firstPin = pin
+            setupStage = 2
+            pinBuffer.clear()
+            updateDots()
+            binding.unlockSubtitle.setText(R.string.pin_confirm_subtitle)
+        } else {
+            if (pin == firstPin) {
+                pinManager.setPin(pin)
+                unlock()
+            } else {
+                setupStage = 1
+                firstPin = ""
+                pinBuffer.clear()
+                updateDots()
+                binding.unlockSubtitle.setText(R.string.pin_create_subtitle)
+                binding.txtPinError.setText(R.string.pin_mismatch)
+            }
+        }
+    }
+
+    private fun showCooldown() {
+        val sec = ((cooldownUntil - System.currentTimeMillis()) / 1000).toInt() + 1
+        binding.txtPinError.text = getString(R.string.pin_cooldown, sec)
     }
 
     private fun unlock() {
@@ -122,17 +178,16 @@ class MainActivity : AppCompatActivity() {
         unlocked = false
         entries.clear()
         adapter.submit(entries)
-        binding.pinInput.setText("")
-        binding.pinConfirmInput.setText("")
         binding.mainView.visibility = View.GONE
         binding.lockView.visibility = View.VISIBLE
+        updateLockUi()
     }
 
     private fun copyToClipboard(label: String, value: String) {
         if (value.isBlank()) return
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText(label, value))
-        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+        Snackbar.make(binding.mainView, R.string.copied, Snackbar.LENGTH_SHORT).show()
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({ cm.clearPrimaryClip() }, 30_000)
     }
