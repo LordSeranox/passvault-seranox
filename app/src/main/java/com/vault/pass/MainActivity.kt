@@ -51,10 +51,15 @@ class MainActivity : AppCompatActivity() {
         binding.btnUnlock.setOnClickListener { showBiometricPrompt() }
         binding.fabAdd.setOnClickListener { showEntryDialog(null) }
 
-        if (canBiometric()) showBiometricPrompt() else {
+        if (!canBiometric()) {
             binding.lockView.visibility = View.VISIBLE
             Toast.makeText(this, R.string.biometric_error, Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!unlocked && canBiometric()) showBiometricPrompt()
     }
 
     override fun onStop() {
@@ -67,10 +72,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun canBiometric(): Boolean =
-        BiometricManager.from(this).canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.BIOMETRIC_WEAK
-        ) == BiometricManager.BIOMETRIC_SUCCESS
+        BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS ||
+            BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+
+    private fun bestAuthenticators(): Int {
+        val strong = BiometricManager.from(this)
+            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+            BiometricManager.BIOMETRIC_SUCCESS
+        return if (strong) BiometricManager.Authenticators.BIOMETRIC_STRONG
+        else BiometricManager.Authenticators.BIOMETRIC_WEAK
+    }
 
     private fun showBiometricPrompt() {
         val executor: Executor = ContextCompat.getMainExecutor(this)
@@ -81,20 +94,14 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onAuthenticationError(code: Int, message: CharSequence) {
-                    if (code == BiometricPrompt.ERROR_USER_CANCELED ||
-                        code == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
-                        finish()
-                    }
+                    binding.lockView.visibility = View.VISIBLE
                 }
             })
 
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.unlock_title))
             .setSubtitle(getString(R.string.unlock_subtitle))
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.BIOMETRIC_WEAK
-            )
+            .setAllowedAuthenticators(bestAuthenticators())
             .build()
 
         prompt.authenticate(info)
