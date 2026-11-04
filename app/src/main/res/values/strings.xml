@@ -75,4 +75,18 @@
     <string name="settings_audit_toggle">Afficher le tableau de bord (mots de passe faibles / réutilisés)</string>
     <string name="hint_pin">Code PIN</string>
     <string name="pin_wrong">Code incorrect</string>
+    <string name="hint_totp">Code secret TOTP (optionnel)</string>
+    <string name="error_invalid_totp">Code secret TOTP invalide (Base32)</string>
+    <string name="settings_sort">Tri des entrées</string>
+    <string name="settings_sort_alpha">Alphabétique</string>
+    <string name="settings_sort_recent">Plus récents d\u2019abord</string>
+    <string name="settings_trash">Corbeille</string>
+    <string name="trash_count">Corbeille (%d entrées)</string>
+    <string name="trash_empty">Corbeille vide</string>
+    <string name="trash_restored">Entrées restaurées</string>
+    <string name="trash_emptied">Corbeille vidée</string>
+    <string name="action_restore_all">Restaurer tout</string>
+    <string name="action_empty_trash">Vider définitivement</string>
+    <string name="moved_to_trash">Déplacé vers la corbeille</string>
+    <string name="undo">Annuler</string>
 </resources>

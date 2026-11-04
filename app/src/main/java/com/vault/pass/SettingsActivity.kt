@@ -47,6 +47,15 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnBack.setOnClickListener { finish() }
 
+        if (prefs.sortOrder == "recent") binding.sortRecent.isChecked = true
+        else binding.sortAlpha.isChecked = true
+        binding.sortGroup.setOnCheckedChangeListener { _, _ ->
+            prefs.sortOrder = if (binding.sortRecent.isChecked) "recent" else "alpha"
+        }
+
+        updateTrashLabel()
+        binding.btnTrash.setOnClickListener { showTrashDialog() }
+
         updateSelfDestructLabel()
         binding.btnSelfDestruct.setOnClickListener { configureSelfDestruct() }
 
@@ -87,6 +96,40 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchAudit.setOnCheckedChangeListener { _, checked ->
             prefs.auditEnabled = checked
         }
+    }
+
+    private fun updateTrashLabel() {
+        val count = repo.load().count { it.deleted }
+        binding.btnTrash.text = if (count > 0)
+            getString(R.string.trash_count, count)
+        else getString(R.string.trash_empty)
+    }
+
+    private fun showTrashDialog() {
+        val trashed = repo.load().filter { it.deleted }
+        if (trashed.isEmpty()) {
+            Toast.makeText(this, R.string.trash_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = trashed.map { it.site.ifBlank { "(sans nom)" } }.toTypedArray()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.trash_count, trashed.size))
+            .setItems(names, null)
+            .setPositiveButton(R.string.action_restore_all) { _, _ ->
+                val entries = repo.load()
+                entries.filter { it.deleted }.forEach { it.deleted = false }
+                repo.save(entries)
+                updateTrashLabel()
+                Toast.makeText(this, R.string.trash_restored, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.action_empty_trash) { _, _ ->
+                val entries = repo.load()
+                entries.removeAll { it.deleted }
+                repo.save(entries)
+                updateTrashLabel()
+                Toast.makeText(this, R.string.trash_emptied, Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun applyTheme(theme: String) {

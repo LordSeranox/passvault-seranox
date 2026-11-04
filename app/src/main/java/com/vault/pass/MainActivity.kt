@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private var failedAttempts = 0
     private var cooldownUntil = 0L
     private var verifying = false
+    private var skipNextLock = false
     private val handler = Handler(Looper.getMainLooper())
 
     private val cooldownTicker = object : Runnable {
@@ -53,6 +54,16 @@ class MainActivity : AppCompatActivity() {
             } else {
                 binding.txtPinError.text = getString(R.string.pin_cooldown, (remaining / 1000).toInt() + 1)
                 handler.postDelayed(this, 500)
+            }
+        }
+    }
+
+    private val totpTicker = object : Runnable {
+        override fun run() {
+            if (!unlocked) return
+            if (entries.any { !it.deleted && it.totpSecret.isNotBlank() }) {
+                adapter.submit(visibleEntries(), binding.searchInput.text?.toString().orEmpty())
+                handler.postDelayed(this, 1000)
             }
         }
     }
@@ -77,6 +88,7 @@ class MainActivity : AppCompatActivity() {
             entries,
             onCopyUser = { copyToClipboard(it.username) },
             onCopyPass = { copyToClipboard(it.password) },
+            onCopyTotp = { copyToClipboard(it) },
             onEdit = { showEntryDialog(it) },
             onDelete = { confirmDelete(it) },
             onTogglePin = { togglePin(it) }
@@ -101,6 +113,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabAdd.setOnClickListener { showEntryDialog(null) }
         binding.btnSettings.setOnClickListener {
+            skipNextLock = true
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         binding.searchInput.doAfterTextChanged { refreshList() }
@@ -109,12 +122,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        if (skipNextLock) {
+            skipNextLock = false
+            return
+        }
         lock()
     }
 
     override fun onResume() {
         super.onResume()
-        if (unlocked) refreshList()
+        if (unlocked) {
+            entries = repo.load()
+            refreshList()
+        }
     }
 
     private fun applyLocale(lang: String) {
@@ -254,11 +274,14 @@ class MainActivity : AppCompatActivity() {
         binding.lockView.visibility = View.GONE
         binding.mainView.visibility = View.VISIBLE
         refreshList()
+        handler.removeCallbacks(totpTicker)
+        handler.postDelayed(totpTicker, 1000)
     }
 
     private fun lock() {
         if (!unlocked) return
         unlocked = false
+        handler.removeCallbacks(totpTicker)
         entries.clear()
         adapter.submit(entries)
         binding.searchInput.setText("")
@@ -267,10 +290,22 @@ class MainActivity : AppCompatActivity() {
         updateLockUi()
     }
 
+    private fun visibleEntries(): List<VaultEntry> {
+        val active = entries.filter { !it.deleted }
+        return when (prefs.sortOrder) {
+            "recent" -> active.sortedWith(
+                compareByDescending<VaultEntry> { it.pinned }.thenByDescending { it.createdAt }
+            )
+            else -> active.sortedWith(
+                compareByDescending<VaultEntry> { it.pinned }.thenBy { it.site.lowercase() }
+            )
+        }
+    }
+
     private fun refreshList() {
-        adapter.submit(entries, binding.searchInput.text?.toString().orEmpty())
+        adapter.submit(visibleEntries(), binding.searchInput.text?.toString().orEmpty())
         binding.emptyView.visibility =
-            if (entries.isEmpty()) View.VISIBLE else View.GONE
+            if (entries.none { !it.deleted }) View.VISIBLE else View.GONE
         updateAuditCard()
     }
 
@@ -279,8 +314,9 @@ class MainActivity : AppCompatActivity() {
             binding.auditCard.visibility = View.GONE
             return
         }
-        val weak = entries.count { PasswordStrength.isWeak(it.password) }
-        val reused = entries.groupBy { it.password.lowercase() }
+        val active = entries.filter { !it.deleted }
+        val weak = active.count { PasswordStrength.isWeak(it.password) }
+        val reused = active.groupBy { it.password.lowercase() }
             .count { (_, v) -> v.size > 1 }
         binding.auditCard.visibility = View.VISIBLE
         binding.auditText.text = getString(R.string.audit_summary, weak, reused)
@@ -306,6 +342,7 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.inputSite.setText(existing?.site)
         dialogBinding.inputUsername.setText(existing?.username)
         dialogBinding.inputPassword.setText(existing?.password)
+        dialogBinding.inputTotp.setText(existing?.totpSecret)
         dialogBinding.inputNotes.setText(existing?.notes)
 
         val updateStrength = { p: String ->
@@ -338,12 +375,18 @@ class MainActivity : AppCompatActivity() {
                 Snackbar.make(dialogBinding.root, R.string.error_required_fields, Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            val totp = dialogBinding.inputTotp.text?.toString()?.trim().orEmpty()
+            if (totp.isNotEmpty() && Totp.code(totp) == null) {
+                Snackbar.make(dialogBinding.root, R.string.error_invalid_totp, Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             if (existing == null) {
                 entries.add(
                     VaultEntry(
                         site = site,
                         username = dialogBinding.inputUsername.text?.toString()?.trim().orEmpty(),
                         password = pass,
+                        totpSecret = totp,
                         notes = dialogBinding.inputNotes.text?.toString()?.trim().orEmpty()
                     )
                 )
@@ -351,6 +394,7 @@ class MainActivity : AppCompatActivity() {
                 existing.site = site
                 existing.username = dialogBinding.inputUsername.text?.toString()?.trim().orEmpty()
                 existing.password = pass
+                existing.totpSecret = totp
                 existing.notes = dialogBinding.inputNotes.text?.toString()?.trim().orEmpty()
             }
             repo.save(entries)
@@ -364,9 +408,16 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.action_delete)
             .setMessage(getString(R.string.delete_confirm, entry.site))
             .setPositiveButton(R.string.action_delete) { _, _ ->
-                entries.removeAll { it.id == entry.id }
+                entry.deleted = true
                 repo.save(entries)
                 refreshList()
+                Snackbar.make(binding.mainView, R.string.moved_to_trash, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.undo) {
+                        entry.deleted = false
+                        repo.save(entries)
+                        refreshList()
+                    }
+                    .show()
             }
             .setNegativeButton(R.string.action_cancel, null)
             .show()

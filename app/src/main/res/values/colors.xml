@@ -9,4 +9,10 @@
     <color name="vault_error">#D64545</color>
     <color name="vault_success">#2E9E4F</color>
     <color name="ic_launcher_background">#0E1116</color>
+    <color name="avatar_1">#2F6BFF</color>
+    <color name="avatar_2">#7C4DFF</color>
+    <color name="avatar_3">#E85D75</color>
+    <color name="avatar_4">#2E9E6E</color>
+    <color name="avatar_5">#D6803B</color>
+    <color name="avatar_6">#3B8EA5</color>
 </resources>

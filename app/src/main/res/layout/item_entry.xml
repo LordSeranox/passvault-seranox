@@ -14,98 +14,128 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/txtSite"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/vault_text_primary"
-            android:textSize="17sp"
+            android:id="@+id/avatarLetter"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="14dp"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/txtUsername"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/vault_text_secondary"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/txtPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:fontFamily="monospace"
-            android:textColor="@color/vault_text_secondary"
-            android:textSize="14sp" />
-
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <ImageButton
-                android:id="@+id/btnPin"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="@string/action_pin"
-                android:src="@drawable/ic_pin"
-                app:tint="@color/vault_text_secondary" />
+            <TextView
+                android:id="@+id/txtSite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/vault_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btnCopyUser"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="Copier identifiant"
-                android:src="@drawable/ic_person"
-                app:tint="@color/vault_text_secondary" />
+            <TextView
+                android:id="@+id/txtUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/vault_text_secondary"
+                android:textSize="14sp" />
 
-            <ImageButton
-                android:id="@+id/btnReveal"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="Afficher mot de passe"
-                android:src="@drawable/ic_eye"
-                app:tint="@color/vault_text_secondary" />
+            <TextView
+                android:id="@+id/txtPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="monospace"
+                android:textColor="@color/vault_text_secondary"
+                android:textSize="14sp" />
 
-            <ImageButton
-                android:id="@+id/btnCopyPass"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="Copier mot de passe"
-                android:src="@drawable/ic_copy"
-                app:tint="@color/vault_text_secondary" />
+            <TextView
+                android:id="@+id/txtTotp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="monospace"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:textColor="@color/vault_accent"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/btnEdit"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="@string/action_edit"
-                android:src="@drawable/ic_gear"
-                app:tint="@color/vault_accent" />
+                <ImageButton
+                    android:id="@+id/btnPin"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/action_pin"
+                    android:src="@drawable/ic_pin"
+                    app:tint="@color/vault_text_secondary" />
 
-            <ImageButton
-                android:id="@+id/btnDelete"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="@string/action_delete"
-                android:src="@drawable/ic_delete"
-                app:tint="@color/vault_error" />
+                <ImageButton
+                    android:id="@+id/btnCopyUser"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="Copier identifiant"
+                    android:src="@drawable/ic_person"
+                    app:tint="@color/vault_text_secondary" />
+
+                <ImageButton
+                    android:id="@+id/btnReveal"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="Afficher mot de passe"
+                    android:src="@drawable/ic_eye"
+                    app:tint="@color/vault_text_secondary" />
+
+                <ImageButton
+                    android:id="@+id/btnCopyPass"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="Copier mot de passe"
+                    android:src="@drawable/ic_copy"
+                    app:tint="@color/vault_text_secondary" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnEdit"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/action_edit"
+                    android:src="@drawable/ic_gear"
+                    app:tint="@color/vault_accent" />
+
+                <ImageButton
+                    android:id="@+id/btnDelete"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@string/action_delete"
+                    android:src="@drawable/ic_delete"
+                    app:tint="@color/vault_error" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

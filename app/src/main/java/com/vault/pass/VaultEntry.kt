@@ -10,7 +10,10 @@ data class VaultEntry(
     var username: String,
     var password: String,
     var notes: String = "",
-    var pinned: Boolean = false
+    var pinned: Boolean = false,
+    var totpSecret: String = "",
+    var deleted: Boolean = false,
+    var createdAt: Long = System.currentTimeMillis()
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -19,6 +22,9 @@ data class VaultEntry(
         .put("password", password)
         .put("notes", notes)
         .put("pinned", pinned)
+        .put("totp", totpSecret)
+        .put("deleted", deleted)
+        .put("createdAt", createdAt)
 
     companion object {
         fun fromJson(o: JSONObject) = VaultEntry(
@@ -27,7 +33,10 @@ data class VaultEntry(
             username = o.optString("username"),
             password = o.optString("password"),
             notes = o.optString("notes"),
-            pinned = o.optBoolean("pinned", false)
+            pinned = o.optBoolean("pinned", false),
+            totpSecret = o.optString("totp", ""),
+            deleted = o.optBoolean("deleted", false),
+            createdAt = o.optLong("createdAt", System.currentTimeMillis())
         )
     }
 }

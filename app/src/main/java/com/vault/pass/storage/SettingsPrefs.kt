@@ -27,11 +27,16 @@ class SettingsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_AUDIT, false)
         set(v) = prefs.edit().putBoolean(KEY_AUDIT, v).apply()
 
+    var sortOrder: String
+        get() = prefs.getString(KEY_SORT, "alpha") ?: "alpha"
+        set(v) = prefs.edit().putString(KEY_SORT, v).apply()
+
     companion object {
         private const val KEY_LANG = "language"
         private const val KEY_THEME = "theme"
         private const val KEY_SD = "self_destruct_threshold"
         private const val KEY_WRONG = "wrong_attempts"
         private const val KEY_AUDIT = "audit_enabled"
+        private const val KEY_SORT = "sort_order"
     }
 }

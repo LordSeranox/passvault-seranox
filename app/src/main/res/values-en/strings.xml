@@ -75,4 +75,18 @@
     <string name="settings_audit_toggle">Show the dashboard (weak / reused passwords)</string>
     <string name="hint_pin">PIN code</string>
     <string name="pin_wrong">Wrong code</string>
+    <string name="hint_totp">TOTP secret code (optional)</string>
+    <string name="error_invalid_totp">Invalid TOTP secret (Base32)</string>
+    <string name="settings_sort">Entry sorting</string>
+    <string name="settings_sort_alpha">Alphabetical</string>
+    <string name="settings_sort_recent">Most recent first</string>
+    <string name="settings_trash">Trash</string>
+    <string name="trash_count">Trash (%d entries)</string>
+    <string name="trash_empty">Trash is empty</string>
+    <string name="trash_restored">Entries restored</string>
+    <string name="trash_emptied">Trash emptied</string>
+    <string name="action_restore_all">Restore all</string>
+    <string name="action_empty_trash">Empty permanently</string>
+    <string name="moved_to_trash">Moved to trash</string>
+    <string name="undo">Undo</string>
 </resources>
