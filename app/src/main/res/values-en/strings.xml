@@ -73,4 +73,6 @@
     <string name="theme_light">Light</string>
     <string name="settings_audit">Vault audit</string>
     <string name="settings_audit_toggle">Show the dashboard (weak / reused passwords)</string>
+    <string name="hint_pin">PIN code</string>
+    <string name="pin_wrong">Wrong code</string>
 </resources>

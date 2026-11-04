@@ -73,4 +73,6 @@
     <string name="theme_light">Clair</string>
     <string name="settings_audit">Audit du coffre</string>
     <string name="settings_audit_toggle">Afficher le tableau de bord (mots de passe faibles / réutilisés)</string>
+    <string name="hint_pin">Code PIN</string>
+    <string name="pin_wrong">Code incorrect</string>
 </resources>
